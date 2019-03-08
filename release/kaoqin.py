@@ -100,7 +100,7 @@ for i in range(0,datashape3[1]):
         data3.iloc[j,i] = int(t[0])*60 + int(t[1])
 mdata3 = data3.values
 
-#将coursetime.csv中的上课时间转为矩阵，并补在打卡时间后面，这样每个人的打卡、上课时间就都在一起了
+#将coursetime.csv中的上课时间转为矩阵，并补在打卡时间后面，这样每个人的上课、下课都算打一次卡
 satsun = np.zeros(20) #周六日无课
 
 for i in range (0,data1['人员编号'].unique().size):
