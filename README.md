@@ -1,5 +1,6 @@
 # check-on-work-attendance-for-comet-machine
 A little script for count lab student attendance ,a job for superviser. Data is output from a Comet(科密) machine per week. With slow algorithm,but work.
+
 使用说明：
     1、“coursetab.csv”文件为教务处公布的每日上课时间段；
     2、“coursetime.csv”文件为参与打卡的每位同学的上课时间（所有
