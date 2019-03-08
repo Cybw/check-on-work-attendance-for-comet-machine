@@ -196,11 +196,13 @@ for i in range (0,data1['人员编号'].unique().size):
             #下午无记录,但是中午有记录且未占用，并且晚上也有记录的情况
             if e == 1 and flag1 == 0 and d != 0: 
                 afternoon = afternoon + np.min(dx) - np.max(ex)
+		flag2 = 1 #标记晚上最早记录占用
             elif e > 1 and flag0 == 1 and d != 0: #如果中午被占用了一个，那么就从第二个（ex[1]）开始
                 afternoon = afternoon + np.min(dx) - ex[1]
+		flag2 = 1 #标记晚上最早记录占用
             elif e > 1 and flag0 == 0 and d != 0:
                 afternoon = afternoon + np.min(dx) - ex[1]
-            flag2 = 1 #标记晚上最早记录占用
+            	flag2 = 1 #标记晚上最早记录占用
         else: 
             #如果下午有记录的话
             if e > 1 and d == 0 and flag1 == 0: #下午早退
