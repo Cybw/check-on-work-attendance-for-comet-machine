@@ -2,11 +2,13 @@
 A little script for count lab student attendance ,a job for superviser. Data is output from a Comet(科密) machine per week. With slow algorithm,but work.
 
 Caution!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The demo.xls is encoding by 'gbk',but the truely data I used is 'cp1252'. So , if u want to run the demo ... 
 please use :
 data = xlrd.open_workbook(filename + '.xls', encoding_override='gbk')
 and
 with codecs.open(filename + '.csv', 'w', encoding='gbk') as f:
+
 Thanks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 使用说明：
