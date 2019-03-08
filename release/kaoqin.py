@@ -14,6 +14,17 @@ Created on Mon Mar  4 10:30:40 2019
     3、使用前请将考勤报表上传至脚本同一目录下；
     4、将文件名替换为需要统计的表格名（不带.xls），确认是否需要包括
     上课时间，点击运行即可。
+
+Caution!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The demo.xls is encoding by 'gbk',but the truely data I used is 'cp1252'. So , 
+if u want to run the demo ... please use : 
+
+data = xlrd.open_workbook(filename + '.xls', encoding_override='gbk') (line 43)
+	and 
+with codecs.open(filename + '.csv', 'w', encoding='gbk') as f: (line 47)
+
+Thanks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 """
 
 import xlrd
