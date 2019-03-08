@@ -1,5 +1,5 @@
 # check-on-work-attendance-for-comet-machine
-A little script for count lab student attendance ,a job for superviser. Data is output from a Comet(科密) machine per week. With slow algorithm,but work.
+A little script for count lab student attendance. Data is output from a Comet(科密) machine per week. With slow algorithm,but work.
 
 Caution!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
