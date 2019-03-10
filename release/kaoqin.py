@@ -143,18 +143,30 @@ mdata.sort(axis=1)
 for i in range (0,data1['人员编号'].unique().size):
     for j in range (1,8):
         num = i*7 + j - 1
+        flag_a0 = 0
+        flag_m0 = 0
         if (j!=6) and (j!=7):
-            if np.sum((mdata[num] != 0)*(mdata[num] >= 240)*(mdata[num] <= 520)) == 0: #4:00-8:40无记录
-                print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午迟到！')
-            if np.sum((mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 850)) == 0: #11:20-14:10无记录
-                print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午早退&下午迟到！')
-            if np.sum((mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 850)) == 1:
-                if np.sum((mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 780)) == 0: #11:20-13:00无记录
-                    print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午早退！')
-                else:
-                    print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午迟到！')
-            if np.sum((mdata[num] != 0)*(mdata[num] >= 1040)) == 0: #17:20后无记录
-                print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午早退！')
+            if np.sum(mdata[num] != 0) == 0: #全天无记录
+                print (data2.iloc[i,1] + ' 星期 '+str(j)+' 全天缺勤！')
+            elif np.sum((mdata[num] != 0)*(mdata[num] <= 1080)) == 0: #白天无记录
+                print (data2.iloc[i,1] + ' 星期 '+str(j)+' 白天缺勤！')
+            else:
+                if np.sum((mdata[num] != 0)*(mdata[num] >= 240)*(mdata[num] <= 780)) == 0: #4:00-13:00无记录
+                    print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午缺勤！')
+                    flag_m0 = 1
+                elif np.sum((mdata[num] != 0)*(mdata[num] >= 240)*(mdata[num] <= 520)) == 0: #4:00-8:40无记录
+                    print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午迟到！')
+                if np.sum((mdata[num] != 0)*(mdata[num] >= 780)*(mdata[num] <= 1110)) == 0: #13:00-18:30无记录
+                    print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午缺勤！')
+                    flag_a0 = 1
+                if np.sum((mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 850)) <= 1:
+                    if np.sum((mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 780)) == 0 and flag_m0 != 1: #11:20-13:00无记录
+                        print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午早退！')
+                    elif np.sum((mdata[num] != 0)*(mdata[num] > 780)*(mdata[num] <= 850)) == 0 and flag_a0 != 1: #13:00-14:10无记录
+                        print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午迟到！')
+                if np.sum((mdata[num] != 0)*(mdata[num] >= 1040)) == 0 and flag_a0 != 1: #17:20后无记录
+                    print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午早退！')
+
 
 
 #本着宁多算，不少算的原则，计算打卡时间
