@@ -29,15 +29,17 @@ Thanks!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import xlrd
 import pandas as pd 
-import csv 
+import csv
 import codecs
 import numpy as np
 
-#————————使用前请输入文件名，并确认是否包括上课时间—————————————
+#————————使用前请输入文件名，并确认是否包括上课时间以及休假日—————————————
 #文件名                        
-filename = 'demo'
+filename = '20190617-0623'
 #是否包括上课时间，1为包括       
-course_enable = 0
+course_enable = 1
+#休假日（除周末外休假），用逗号隔开如 vacation = [4，5]即为周四周五休假,没有就是[]
+vacation = []
 #——————————————————————————————————————————
 
 data = xlrd.open_workbook(filename + '.xls', encoding_override='cp1252')
@@ -51,7 +53,8 @@ with codecs.open(filename + '.csv', 'w', encoding='cp1252') as f:
         write.writerow(row_value)
 
 #打开
-data1 = pd.read_csv(filename + '.csv',encoding='gbk',skiprows=0)
+data = pd.read_csv(filename + '.csv',encoding='gbk',skiprows=0)
+data1 = data
 data2 = pd.read_csv('coursetime.csv',encoding='gbk',skiprows=0)
 data3 = pd.read_csv('coursetab.csv',encoding='gbk',skiprows=0)
 data1.drop(data1.index[[-1]],axis=0,inplace = True)
@@ -68,11 +71,20 @@ data1['星期'] = data1['星期'].replace('星期日',int(7))
 #为方便计算，将00：00变为00：01，将nan置0
 data1 = data1.replace('00:00     ','00:01')
 data1 = data1.replace(np.nan,'0:0')
+
+#删除误打卡管理员,将小时统一转为分钟，并将dataframe转为矩阵
+delete = []
+j = 0
+for i in range(0,data1.姓名.size):
+    if data1.姓名[i] == '管理员':
+        delete.extend(str(i))
+data1.drop(data1.index[list(map(int, delete))],axis=0,inplace = True)
+#data1 = data1.reset_index()
+
 datashape1 = data1.shape
 datashape2 = data2.shape
 datashape3 = data3.shape
 
-#将小时统一转为分钟，并将dataframe转为矩阵
 for i in range(5,datashape1[1]):
     for j in range (0,datashape1[0]):
         t = str(data1.iloc[j,i]).split(':',1)
@@ -82,15 +94,19 @@ mdata1 = data1.drop(data1.columns[[0,2,3]],axis=1)
 mdata1 = mdata1.values
 mdata1 = np.insert(mdata1, mdata1.shape[0], values=np.zeros(datashape1[1]-3) , axis=0)
 
+
 #标记整周无记录人员
 exit = data1['人员编号'].unique()
 full = data2.num.size
 delete = []
+j = 0
 for i in range(0,full):
-    if data2.num[i] != exit[i]:
+    if data2.num[i] == exit[j]:
+        j = j + 1
+    else:
         print (data2.iloc[i,1]+' 上周无记录！')
-        delete.extend(i)
-data2.drop(data2.index[delete],axis=0,inplace = True)
+        delete.extend(str(i))
+data2.drop(data2.index[list(map(int, delete))],axis=0,inplace = True)
 
 #将无记录日补为零向量，这样每个人的打卡时间就都是7天，方便循环
 for i in range (0,data1['人员编号'].unique().size):
@@ -111,19 +127,19 @@ for i in range(0,datashape3[1]):
         data3.iloc[j,i] = int(t[0])*60 + int(t[1])
 mdata3 = data3.values
 
-#将coursetime.csv中的上课时间转为矩阵，并补在打卡时间后面，这样每个人的上课、下课都算打一次卡
-satsun = np.zeros(20) #周六日无课
+#将coursetime.csv中的上课时间转为矩阵，并补在打卡时间后面，这样上课、下课都算打一次卡
+satsun = np.zeros(22) #周六日无课
 
 for i in range (0,data1['人员编号'].unique().size):
     for j in range (1,8):
         num = i*7 + j - 1
-        if (j!=6) and (j!=7):
+        if (j not in vacation) and (j!=6) and (j!=7):
             if course_enable == 1:
                 x = np.array(list(str(data2.iloc[i][j+1])))
             else:
-                x = ['0']*20 
+                x = ['0']*22 
             add = []
-            for k in range (0,10) :
+            for k in range (0,11) :
                 if x[k] == '1':
                     add = np.hstack((add,mdata3[k]))
                 else:
@@ -145,7 +161,7 @@ for i in range (0,data1['人员编号'].unique().size):
         num = i*7 + j - 1
         flag_a0 = 0
         flag_m0 = 0
-        if (j!=6) and (j!=7):
+        if (j not in vacation) and (j!=6) and (j!=7):
             if np.sum(mdata[num] != 0) == 0: #全天无记录
                 print (data2.iloc[i,1] + ' 星期 '+str(j)+' 全天缺勤！')
             elif np.sum((mdata[num] != 0)*(mdata[num] <= 1080)) == 0: #白天无记录
@@ -156,7 +172,7 @@ for i in range (0,data1['人员编号'].unique().size):
                     flag_m0 = 1
                 elif np.sum((mdata[num] != 0)*(mdata[num] >= 240)*(mdata[num] <= 520)) == 0: #4:00-8:40无记录
                     print (data2.iloc[i,1] + ' 星期 '+str(j)+' 上午迟到！')
-                if np.sum((mdata[num] != 0)*(mdata[num] >= 780)*(mdata[num] <= 1110)) == 0: #13:00-18:30无记录
+                if np.sum((mdata[num] != 0)*(mdata[num] >= 720)*(mdata[num] <= 1110)) == 0: #12:00-18:30无记录
                     print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午缺勤！')
                     flag_a0 = 1
                 if np.sum((mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 850)) <= 1:
@@ -168,11 +184,8 @@ for i in range (0,data1['人员编号'].unique().size):
                     print (data2.iloc[i,1] + ' 星期 '+str(j)+' 下午早退！')
 
 
-
 #本着宁多算，不少算的原则，计算打卡时间
-
 time = pd.DataFrame(np.zeros([data1['人员编号'].unique().size,2]))
-    
 for i in range (0,data1['人员编号'].unique().size):
     morning = 0
     afternoon = 0
@@ -193,8 +206,16 @@ for i in range (0,data1['人员编号'].unique().size):
         c = cx.shape[0]
         dx = mdata[num][(mdata[num] != 0)*(mdata[num] > 1040)*(mdata[num] <= 1439)] #晚间打卡的记录 17:20-23:59
         d = dx.shape[0]
-        ex = mdata[num][(mdata[num] != 0)*(mdata[num] >= 680)*(mdata[num] <= 850)] #中午打卡的记录 11:20-14:10
+        ex = mdata[num][(mdata[num] != 0)*(mdata[num] > 680)*(mdata[num] <= 850)] #中午打卡的记录 11:20-14:10
         e = ex.shape[0]
+        '''        
+        print(str(i), end='-')
+        print(np.round(bx/60,1), end='-')
+        print(np.round(ex/60,1), end='-')
+        print(np.round(cx/60,1), end='-')
+        print(np.round(dx/60,1))
+        '''
+
         if b != 0:
             #上午有打卡记录的情况
             if e == 0: #上午早退的情况 
@@ -208,13 +229,13 @@ for i in range (0,data1['人员编号'].unique().size):
             #下午无记录,但是中午有记录且未占用，并且晚上也有记录的情况
             if e == 1 and flag1 == 0 and d != 0: 
                 afternoon = afternoon + np.min(dx) - np.max(ex)
-		flag2 = 1 #标记晚上最早记录占用
+                flag2 = 1 #标记晚上最早记录占用
             elif e > 1 and flag0 == 1 and d != 0: #如果中午被占用了一个，那么就从第二个（ex[1]）开始
                 afternoon = afternoon + np.min(dx) - ex[1]
-		flag2 = 1 #标记晚上最早记录占用
+                flag2 = 1 #标记晚上最早记录占用
             elif e > 1 and flag0 == 0 and d != 0:
                 afternoon = afternoon + np.min(dx) - ex[1]
-            	flag2 = 1 #标记晚上最早记录占用
+                flag2 = 1 #标记晚上最早记录占用
         else: 
             #如果下午有记录的话
             if e > 1 and d == 0 and flag1 == 0: #下午早退
@@ -222,17 +243,17 @@ for i in range (0,data1['人员编号'].unique().size):
             elif e > 1 and d == 0 and flag1 == 1: #下午早退且中午被占用一个
                 afternoon = afternoon + np.max(cx) - np.max(ex)
             elif e > 1 and d != 0 and flag1 == 0: #上午没打卡的情况
-                afternoon = afternoon + np.max(dx) - np.max(ex)
+                afternoon = afternoon + np.min(dx) - np.max(ex)
                 flag2 = 1
             elif e > 1 and d != 0 and flag1 == 1: #最正常的情况
-                afternoon = afternoon + np.max(dx) - np.max(ex)
+                afternoon = afternoon + np.min(dx) - np.max(ex)
                 flag2 = 1
             elif e == 1 and d == 0 and flag1 == 0 : #上午没打卡的情况
                 afternoon = afternoon + np.max(cx) - np.max(ex)
             elif e == 0 and d == 0: #下午迟到又早退的情况
                 afternoon = afternoon + np.max(cx) - np.min(cx)
             elif e == 0 and d != 0: #中午没打卡的情况
-                afternoon = afternoon + np.max(dx) - np.min(cx)
+                afternoon = afternoon + np.min(dx) - np.min(cx)
                 flag2 = 1
             
         if a != 0: 
@@ -253,8 +274,10 @@ for i in range (0,data1['人员编号'].unique().size):
     else:
         time.iloc[i,1] = round(((morning + afternoon + evening)/60),3)
     time.iloc[i,0] = data2.iloc[i,1]
+#    print(str(morning)+' '+str(afternoon)+' '+str(evening))
     
 time.sort_values(by=1,inplace=True,ascending= False)
 time = time.reset_index()
 time = time.drop(time.columns[[0]],axis=1)
+time.rename(columns={0:'name', 1:'time'}, inplace = True)
 print(time)
